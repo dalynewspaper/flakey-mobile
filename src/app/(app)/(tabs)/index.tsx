@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
-import { sortUpcoming, useEvents, useNudgeAction, useNudges, useProfile, type Nudge } from '@/features/data';
+import { sortUpcoming, useEvents, useProfile } from '@/features/data';
 import { UpcomingRow } from '@/features/upcoming-row';
 import { useTheme } from '@/hooks/use-theme';
 import { getPushStatus, registerForPush, type PushStatus } from '@/lib/push';
@@ -24,7 +24,6 @@ export default function TodayScreen() {
   const { user } = useAuth();
   const profile = useProfile();
   const events = useEvents();
-  const nudges = useNudges();
   const [pushStatus, setPushStatus] = useState<PushStatus | null>(null);
 
   useFocusEffect(
@@ -33,11 +32,6 @@ export default function TodayScreen() {
     }, []),
   );
 
-  const refreshing = events.isRefetching || nudges.isRefetching;
-  const refresh = () => {
-    events.refetch();
-    nudges.refetch();
-  };
 
   if (events.isPending) return <Loading />;
 
@@ -62,14 +56,14 @@ export default function TodayScreen() {
   };
 
   return (
-    <TabScreen eyebrow={today} title={firstName ? `${greeting()}, ${firstName}.` : `${greeting()}.`} refreshing={refreshing} onRefresh={refresh}>
+    <TabScreen eyebrow={today} title={firstName ? `${greeting()}, ${firstName}.` : `${greeting()}.`} refreshing={events.isRefetching} onRefresh={() => events.refetch()}>
       {pushStatus === 'undetermined' ? (
         <Card tone="ink" style={{ gap: Spacing.md }}>
           <Text variant="heading" style={{ color: t.onPrimary }}>
             Never be the flaky friend.
           </Text>
           <Text style={{ color: t.onPrimary, opacity: 0.8 }}>
-            Get a nudge on your phone before birthdays and key dates, with time to plan something kind.
+            Get a reminder on your phone before birthdays and key dates, with time to plan something kind.
           </Text>
           <Button title="Turn on reminders" variant="secondary" onPress={enableReminders} />
         </Card>
@@ -97,53 +91,6 @@ export default function TodayScreen() {
         )}
       </View>
 
-      {nudges.data && nudges.data.length > 0 ? (
-        <View style={{ gap: Spacing.sm }}>
-          <SectionLabel>Worth a moment</SectionLabel>
-          {nudges.data.map((n) => (
-            <NudgeCard key={n.id} nudge={n} />
-          ))}
-        </View>
-      ) : null}
     </TabScreen>
-  );
-}
-
-function NudgeCard({ nudge }: { nudge: Nudge }) {
-  const router = useRouter();
-  const action = useNudgeAction();
-  const run = (a: 'mark_sent' | 'dismiss' | 'snooze') =>
-    action.mutate(
-      { nudgeId: nudge.id, action: a, snoozeDays: a === 'snooze' ? 3 : undefined },
-      { onError: (e) => Alert.alert('Something went wrong', e instanceof Error ? e.message : '') },
-    );
-
-  return (
-    <Card style={{ gap: Spacing.md }}>
-      <View style={{ gap: Spacing.xs }}>
-        <Text variant="heading">{nudge.title}</Text>
-        <Text muted>{nudge.reason}</Text>
-      </View>
-      {nudge.drafted_message ? (
-        <Card tone="surface" style={{ padding: Spacing.md }}>
-          <Text variant="caption" muted>
-            A message you could send
-          </Text>
-          <Text selectable>{nudge.drafted_message}</Text>
-        </Card>
-      ) : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
-        <Button title="Done" onPress={() => run('mark_sent')} disabled={action.isPending} style={{ flexGrow: 1 }} />
-        <Button title="Later" variant="secondary" onPress={() => run('snooze')} disabled={action.isPending} style={{ flexGrow: 1 }} />
-        <Button title="Dismiss" variant="ghost" onPress={() => run('dismiss')} disabled={action.isPending} />
-      </View>
-      {nudge.person_id ? (
-        <Button
-          title="Open their profile"
-          variant="ghost"
-          onPress={() => router.push({ pathname: '/person/[id]', params: { id: nudge.person_id! } })}
-        />
-      ) : null}
-    </Card>
   );
 }

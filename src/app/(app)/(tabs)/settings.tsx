@@ -87,12 +87,8 @@ export default function SettingsScreen() {
       </View>
 
       <View style={{ gap: Spacing.sm }}>
-        <SectionLabel>More on the web</SectionLabel>
+        <SectionLabel>About</SectionLabel>
         <Card style={{ paddingVertical: Spacing.xs }}>
-          <Row title="Gifts" subtitle="Ideas, history and requests" onPress={() => WebBrowser.openBrowserAsync(`${WEB_APP}/gifts`)} />
-          <Divider />
-          <Row title="Moments" subtitle="Your feed of memories" onPress={() => WebBrowser.openBrowserAsync(`${WEB_APP}/feed`)} />
-          <Divider />
           <Row title="Privacy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_APP}/privacy`)} />
           <Divider />
           <Row title="Terms" onPress={() => WebBrowser.openBrowserAsync(`${WEB_APP}/terms`)} />

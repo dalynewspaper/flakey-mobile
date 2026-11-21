@@ -2,18 +2,18 @@
 
 The iOS and Android app for [Flakey](https://flakey.app), built with Expo SDK 58 and Expo Router.
 
-It connects to the same Supabase project as the web app (built in Lovable), so you sign in with the same email and see the same people, key dates and nudges. All data access goes through the existing tables and row-level security. The app makes no backend changes.
+It connects to the same Supabase project as the web app (built in Lovable), so you sign in with the same email and see the same people and key dates. All data access goes through the existing tables and row-level security. The app makes no backend changes.
 
 ## What's in v1
 
 - **Sign in** with an email link that opens the app, or the 6-digit code from the same email (see "Sign-in setup").
-- **Today:** key dates in the next 30 days, plus "Worth a moment" nudges you can mark done, snooze or dismiss.
+- **Today:** key dates in the next 30 days.
 - **People:** search your circle, open a profile, and add, edit or remove people. Adding someone creates the same automatic key dates as the web wizard: birthday, Mother's or Father's Day, Valentine's Day, Sibling Day and Christmas, depending on the relationship.
 - **Dates:** the year ahead grouped by month. Add, edit or delete key dates, either yearly or one-off.
-- **Settings:** push reminders on or off, links to Gifts and Moments on the web, and sign out.
+- **Settings:** push reminders on or off, and sign out.
 - **Push reminders:** this phone's push token is saved to `device_tokens`. Tapping a reminder opens that key date.
 
-Gifts, Moments, the concierge and shared lists stay on the web for now.
+The app is deliberately focused on remembering birthdays and important dates. Gifts, moments, nudges, the concierge and shared lists are left out on purpose.
 
 ## Run it
 

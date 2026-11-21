@@ -13,7 +13,6 @@ export type Person = Tables['people']['Row'];
 export type FlakeyEvent = Tables['events']['Row'] & {
   person?: { id: string; first_name: string; last_name: string | null; nickname: string | null } | null;
 };
-export type Nudge = Tables['nudges']['Row'];
 export type Profile = Tables['profiles']['Row'];
 
 const EVENT_SELECT = '*, person:people(id, first_name, last_name, nickname)';
@@ -262,45 +261,6 @@ export function useDeleteEvent() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['events'] }),
-  });
-}
-
-// ---------- Nudges ----------
-
-export function useNudges() {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: ['nudges', userId],
-    enabled: !!userId,
-    queryFn: async (): Promise<Nudge[]> => {
-      const nowIso = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('nudges')
-        .select('*')
-        .in('status', ['pending', 'snoozed'])
-        .or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`)
-        .order('importance', { ascending: true })
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
-export type NudgeAction = 'mark_sent' | 'dismiss' | 'snooze';
-
-/** Goes through the same send-nudge function as the web app. */
-export function useNudgeAction() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ nudgeId, action, snoozeDays }: { nudgeId: string; action: NudgeAction; snoozeDays?: number }) => {
-      const { error } = await supabase.functions.invoke('send-nudge', {
-        body: { nudge_id: nudgeId, action, snooze_days: snoozeDays },
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['nudges'] }),
   });
 }
 

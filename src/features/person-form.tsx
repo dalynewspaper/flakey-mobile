@@ -36,7 +36,6 @@ export function PersonForm({
   const [birthday, setBirthday] = useState<string | null>(initialBirthday);
   const [yearKnown, setYearKnown] = useState(initialYearKnown);
   const [notes, setNotes] = useState(initial?.notes ?? '');
-  const [interests, setInterests] = useState((initial?.interests ?? []).join(', '));
   const [nameError, setNameError] = useState<string | null>(null);
 
   const submit = () => {
@@ -54,10 +53,6 @@ export function PersonForm({
       relationshipType,
       birthday: birthdayValue,
       notes: notes.trim() || null,
-      interests: interests
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
     });
   };
 
@@ -97,14 +92,6 @@ export function PersonForm({
         ) : null}
         {birthday ? <Button title="Remove birthday" variant="ghost" onPress={() => setBirthday(null)} /> : null}
       </View>
-
-      <Field
-        label="Interests (optional)"
-        value={interests}
-        onChangeText={setInterests}
-        placeholder="Hiking, jazz, good coffee"
-        hint="Separate with commas. Helps with gift ideas on the web."
-      />
 
       <Field
         label="Notes (optional)"

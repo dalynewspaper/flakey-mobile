@@ -8,7 +8,7 @@ import { UpcomingRow } from '@/features/upcoming-row';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, getNextOccurrence, upcomingAge } from '@/lib/dates';
 import { getPersonDisplayName, relationshipLabel } from '@/lib/people';
-import { Avatar, Button, Card, Chip, ChipRow, Divider, ErrorNotice, Loading, Screen, SectionLabel, Text } from '@/ui';
+import { Avatar, Button, Card, Divider, ErrorNotice, Loading, Screen, SectionLabel, Text } from '@/ui';
 
 export default function PersonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -83,17 +83,6 @@ export default function PersonScreen() {
             onPress={() => router.push({ pathname: '/date/edit', params: { personId: p.id } })}
           />
         </View>
-
-        {p.interests.length > 0 ? (
-          <View style={{ gap: Spacing.sm }}>
-            <SectionLabel>Interests</SectionLabel>
-            <ChipRow>
-              {p.interests.map((i) => (
-                <Chip key={i} label={i} />
-              ))}
-            </ChipRow>
-          </View>
-        ) : null}
 
         {p.notes ? (
           <View style={{ gap: Spacing.sm }}>
