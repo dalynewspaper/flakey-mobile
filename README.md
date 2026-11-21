@@ -44,15 +44,20 @@ The email link sends people back to the app at `flakey://auth/callback`. Supabas
 
 ## Push reminders
 
-This uses the existing backend as-is. `send-event-reminders` calls `send-push-notification`, which sends to APNs directly using native device tokens. To turn it on:
+The daily `send-event-reminders` job sends a push to every user with a registered device, whatever their other reminder settings. It runs 30, 10, 3 and 1 days before each date and on the day itself. It calls `send-push-notification`, which sends iOS tokens to APNs and Android tokens to FCM, using the native device tokens this app saves. Each platform is independent: if one isn't configured, the other still sends.
+
+**iOS**
 
 1. Set these secrets on the Supabase functions: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the .p8 key) and `APNS_BUNDLE_ID=app.flakey.ios`. The bundle ID must match `ios.bundleIdentifier` in `app.json`.
 2. Set `APNS_ENVIRONMENT=sandbox` while testing development builds, then `production` for TestFlight and App Store builds. Device tokens only work against their matching environment.
 
-Known gaps in the backend, left unchanged for now:
+**Android**
 
-- **Android:** tokens are saved with `platform = 'android'`, but `send-push-notification` only sends to iOS. Android needs an FCM sender.
-- **Push-only users:** `send-event-reminders` only picks up users who also have email, WhatsApp or SMS reminders switched on. Someone who wants push alone won't get reminders until push is added to that filter.
+1. Create a Firebase project and add an Android app with the package `app.flakey.android`.
+2. Download `google-services.json` into the repo root and add `"googleServicesFile": "./google-services.json"` under `android` in `app.json`. Without it, Android can't issue a push token.
+3. In Firebase, under Project settings > Service accounts, generate a private key. Save the whole JSON file's contents as the Supabase secret `FCM_SERVICE_ACCOUNT_JSON`.
+
+Notifications arrive on the `reminders` Android channel, which the app creates.
 
 ## Project layout
 
