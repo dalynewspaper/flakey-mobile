@@ -1,65 +1,62 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
+ * Flakey "Paper & Ink" design tokens, mirrored from the web app's index.css.
+ * canvas #f5f3ee, surface #e8e4dd, ink #2d2d2d, deep ink #0d0d0d,
+ * accent #ff3b00 (used as a single dot, never as a fill).
  */
-
-import '@/global.css';
-
-import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    background: '#F5F3EE',
+    card: '#FFFFFF',
+    surface: '#E8E4DD',
+    text: '#2D2D2D',
+    textStrong: '#0D0D0D',
+    textMuted: '#666666',
+    border: '#D9D3C9',
+    primary: '#0D0D0D',
+    onPrimary: '#F5F3EE',
+    accent: '#FF3B00',
+    danger: '#B8401A',
+    success: '#357A57',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#0D0D0D',
+    card: '#1A1A1A',
+    surface: '#242424',
+    text: '#F5F3EE',
+    textStrong: '#FFFFFF',
+    textMuted: '#ADA69B',
+    border: '#2E2E2E',
+    primary: '#F5F3EE',
+    onPrimary: '#0D0D0D',
+    accent: '#FF5A26',
+    danger: '#E0673F',
+    success: '#5BAE82',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type Palette = { [K in keyof typeof Colors.light]: string };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export const Fonts = {
+  display: 'Outfit_600SemiBold',
+  displayBold: 'Outfit_700Bold',
+  body: 'Figtree_400Regular',
+  bodyMedium: 'Figtree_500Medium',
+  bodySemiBold: 'Figtree_600SemiBold',
+} as const;
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const Radius = {
+  sm: 10,
+  md: 16,
+  lg: 24,
+  pill: 999,
+} as const;

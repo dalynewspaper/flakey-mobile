@@ -1,56 +1,71 @@
-# Welcome to your Expo app 👋
+# Flakey mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The iOS and Android app for [Flakey](https://flakey.app), built with Expo SDK 58 and Expo Router.
 
-## Get started
+It connects to the same Supabase project as the web app (built in Lovable), so you sign in with the same email and see the same people, key dates and nudges. All data access goes through the existing tables and row-level security. The app makes no backend changes.
 
-1. Install dependencies
+## What's in v1
 
-   ```bash
-   npm install
-   ```
+- **Sign in** with an email link that opens the app, or the 6-digit code from the same email (see "Sign-in setup").
+- **Today:** key dates in the next 30 days, plus "Worth a moment" nudges you can mark done, snooze or dismiss.
+- **People:** search your circle, open a profile, and add, edit or remove people. Adding someone creates the same automatic key dates as the web wizard: birthday, Mother's or Father's Day, Valentine's Day, Sibling Day and Christmas, depending on the relationship.
+- **Dates:** the year ahead grouped by month. Add, edit or delete key dates, either yearly or one-off.
+- **Settings:** push reminders on or off, links to Gifts and Moments on the web, and sign out.
+- **Push reminders:** this phone's push token is saved to `device_tokens`. Tapping a reminder opens that key date.
 
-2. Start the app
+Gifts, Moments, the concierge and shared lists stay on the web for now.
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+cp .env.example .env     # public Supabase URL and publishable key
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Everything except push notifications runs in Expo Go. Push needs a development build:
 
-### Other setup steps
+```bash
+npx eas-cli@latest build --profile development --platform ios
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Before running `eas build` for the first time, run `npx eas-cli@latest init`. It links the project and adds `extra.eas.projectId` to `app.json`.
 
-## Learn more
+Checks: `npx tsc --noEmit` and `npx expo lint`.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Sign-in setup (one-time, in Supabase)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The email link sends people back to the app at `flakey://auth/callback`. Supabase only redirects to allow-listed URLs, so add these under **Authentication > URL Configuration > Redirect URLs**:
 
-## Join the community
+- `flakey://auth/callback` (development and store builds)
+- `exp://**` (only needed for testing in Expo Go)
 
-Join our community of developers creating universal apps.
+**6-digit code:** the app also accepts the code from the sign-in email, which is handy when the email is opened on a different device. The web app's magic-link template (`supabase/functions/_shared/email-templates/magic-link.tsx`) receives `token` but doesn't display it yet. Add it to the template to turn this on.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Push reminders
+
+This uses the existing backend as-is. `send-event-reminders` calls `send-push-notification`, which sends to APNs directly using native device tokens. To turn it on:
+
+1. Set these secrets on the Supabase functions: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the .p8 key) and `APNS_BUNDLE_ID=app.flakey.ios`. The bundle ID must match `ios.bundleIdentifier` in `app.json`.
+2. Set `APNS_ENVIRONMENT=sandbox` while testing development builds, then `production` for TestFlight and App Store builds. Device tokens only work against their matching environment.
+
+Known gaps in the backend, left unchanged for now:
+
+- **Android:** tokens are saved with `platform = 'android'`, but `send-push-notification` only sends to iOS. Android needs an FCM sender.
+- **Push-only users:** `send-event-reminders` only picks up users who also have email, WhatsApp or SMS reminders switched on. Someone who wants push alone won't get reminders until push is added to that filter.
+
+## Project layout
+
+```
+src/app/                 Expo Router routes
+  _layout.tsx            fonts, providers, auth-gated stacks (Stack.Protected)
+  sign-in.tsx, auth/callback.tsx
+  (app)/(tabs)/          Today, People, Dates, Settings (NativeTabs)
+  (app)/person/          [id] profile, new, edit
+  (app)/date/edit.tsx    add or edit a key date (?id= or ?personId=)
+src/features/data.ts     TanStack Query hooks over Supabase
+src/lib/                 supabase client, push, date and people helpers, generated DB types
+src/ui/                  Paper & Ink components (Text, Button, Card, Field, DateField, etc.)
+```
+
+`src/lib/database.types.ts` is copied from the web app (`src/integrations/supabase/types.ts`). Re-copy it when the schema changes. `src/lib/autoDates.ts` and `src/lib/dates.ts` mirror web logic and say which files they follow.
