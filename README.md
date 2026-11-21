@@ -33,6 +33,19 @@ Before running `eas build` for the first time, run `npx eas-cli@latest init`. It
 
 Checks: `npx tsc --noEmit` and `npx expo lint`.
 
+## Ship to TestFlight
+
+You need an Expo account and an Apple Developer account. From the repo root on your own computer:
+
+```bash
+npm install
+npx eas-cli@latest login
+npx eas-cli@latest init                 # first time only: links the project to Expo
+npx eas-cli@latest build --platform ios --profile production --auto-submit
+```
+
+The first run asks you to sign in to Apple. EAS then creates the signing certificate, the provisioning profile and the App Store Connect app record (`app.flakey.ios`). It builds in the cloud, uploads to App Store Connect and increments the build number on each build. The build reaches TestFlight after Apple finishes processing, usually 10 to 30 minutes. `eas.json` holds the `development`, `preview` and `production` profiles.
+
 ## Sign-in setup (one-time, in Supabase)
 
 The email link sends people back to the app at `flakey://auth/callback`. Supabase only redirects to allow-listed URLs, so add these under **Authentication > URL Configuration > Redirect URLs**:

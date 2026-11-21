@@ -11,7 +11,12 @@
       "bundleIdentifier": "app.flakey.ios",
       "supportsTablet": false,
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -40,7 +45,9 @@
           "backgroundColor": "#F5F3EE",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76,
-          "dark": { "backgroundColor": "#0D0D0D" }
+          "dark": {
+            "backgroundColor": "#0D0D0D"
+          }
         }
       ]
     ],
