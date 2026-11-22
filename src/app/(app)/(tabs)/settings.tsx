@@ -5,7 +5,9 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
-import { useProfile } from '@/features/data';
+import { useEvents, useProfile } from '@/features/data';
+import { toReminderEvents } from '@/features/reminders';
+import { REMINDER_HOUR, syncLocalReminders } from '@/lib/localReminders';
 import { getPushStatus, registerForPush, type PushStatus } from '@/lib/push';
 import { useAuth } from '@/providers/auth';
 import { Button, Card, Divider, Row, SectionLabel, Text } from '@/ui';
@@ -14,15 +16,16 @@ import { TabScreen } from '@/ui/tab-screen';
 const WEB_APP = 'https://flakey.app';
 
 const PUSH_COPY: Record<PushStatus, string> = {
-  granted: 'On for this phone',
+  granted: 'On',
   denied: 'Off. Turn on in phone settings',
   undetermined: 'Not set up yet',
-  unsupported: 'Needs a real device',
+  unsupported: 'Not available here',
 };
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const profile = useProfile();
+  const events = useEvents();
   const [pushStatus, setPushStatus] = useState<PushStatus | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,7 +43,9 @@ export default function SettingsScreen() {
     }
     setBusy(true);
     try {
-      setPushStatus(await registerForPush(user.id, { prompt: true }));
+      const status = await registerForPush(user.id, { prompt: true });
+      setPushStatus(status);
+      if (status === 'granted') await syncLocalReminders(toReminderEvents(events.data));
     } catch (e) {
       Alert.alert("Couldn't turn on reminders", e instanceof Error ? e.message : 'Please try again.');
     } finally {
@@ -67,7 +72,7 @@ export default function SettingsScreen() {
         <SectionLabel>Reminders</SectionLabel>
         <Card style={{ gap: Spacing.md }}>
           <View style={{ gap: Spacing.xs }}>
-            <Text variant="label">Push notifications</Text>
+            <Text variant="label">Reminders on this phone</Text>
             <Text muted>{pushStatus ? PUSH_COPY[pushStatus] : ' '}</Text>
           </View>
           {pushStatus === 'undetermined' || pushStatus === 'denied' ? (
@@ -78,9 +83,13 @@ export default function SettingsScreen() {
               loading={busy}
             />
           ) : null}
+          <Text variant="caption" muted>
+            Sent at {REMINDER_HOUR}am, 30, 10, 3 and 1 days before each date, and on the day. They work even when
+            you&apos;re offline.
+          </Text>
           <Divider />
           <Text variant="caption" muted>
-            Email and WhatsApp reminders, timing and quiet hours are managed on flakey.app.
+            Email and WhatsApp reminders are managed on flakey.app.
           </Text>
           <Button title="Reminder settings on the web" variant="ghost" onPress={() => WebBrowser.openBrowserAsync(`${WEB_APP}/settings`)} />
         </Card>

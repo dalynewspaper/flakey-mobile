@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLocalReminderSync } from '@/features/reminders';
 import { eventIdFromNotification, registerForPush } from '@/lib/push';
 import { useAuth } from '@/providers/auth';
 
@@ -14,8 +15,9 @@ export default function AppLayout() {
   const router = useRouter();
   const { user } = useAuth();
   const lastResponse = Notifications.useLastNotificationResponse();
+  useLocalReminderSync();
 
-  // Refresh this device's push token on launch if reminders are already allowed.
+  // With server push on, refresh this device's token on launch (no-op otherwise).
   useEffect(() => {
     if (user) registerForPush(user.id, { prompt: false }).catch(() => undefined);
   }, [user]);

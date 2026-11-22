@@ -23,7 +23,7 @@ npm install
 npx expo start
 ```
 
-Everything except push notifications runs in Expo Go. Push needs a development build:
+Everything runs in Expo Go, including reminders. For a build that matches the store version, make a development build:
 
 ```bash
 npx eas-cli@latest build --profile development --platform ios
@@ -31,7 +31,7 @@ npx eas-cli@latest build --profile development --platform ios
 
 Before running `eas build` for the first time, run `npx eas-cli@latest init`. It links the project and adds `extra.eas.projectId` to `app.json`.
 
-Checks: `npx tsc --noEmit` and `npx expo lint`.
+Checks: `npm run typecheck`, `npx expo lint` and `npm test`. All three run on every push to GitHub (`.github/workflows/ci.yml`).
 
 ## Ship to TestFlight
 
@@ -55,22 +55,16 @@ The email link sends people back to the app at `flakey://auth/callback`. Supabas
 
 **6-digit code:** the app also accepts the code from the sign-in email, which is handy when the email is opened on a different device. The web app's magic-link template (`supabase/functions/_shared/email-templates/magic-link.tsx`) receives `token` but doesn't display it yet. Add it to the template to turn this on.
 
-## Push reminders
+## Reminders
 
-The daily `send-event-reminders` job sends a push to every user with a registered device, whatever their other reminder settings. It runs 30, 10, 3 and 1 days before each date and on the day itself. It calls `send-push-notification`, which sends iOS tokens to APNs and Android tokens to FCM, using the native device tokens this app saves. Each platform is independent: if one isn't configured, the other still sends.
+Reminders are scheduled **on the phone**, at 9am local time 30, 10, 3 and 1 days before each key date, and on the day. They work offline and need no server setup: once notifications are allowed, the app plans the soonest 60 reminders. It re-plans whenever a date changes or the app comes to the foreground; iOS allows at most 64 pending per app. Dates added on flakey.app are picked up the next time the app opens. The planning lives in `src/lib/reminderPlan.ts` and is unit tested.
 
-**iOS**
+**Server push is off** (`REMOTE_PUSH_ENABLED = false` in `src/lib/push.ts`), so nobody gets each reminder twice. The backend still supports it: `send-event-reminders` runs daily at 09:00 UTC and sends via `send-push-notification`, to APNs for iOS and to FCM for Android. To switch to server push, set the flag to `true` and stop scheduling local reminders. Then configure:
 
-1. Set these secrets on the Supabase functions: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the .p8 key) and `APNS_BUNDLE_ID=app.flakey.ios`. The bundle ID must match `ios.bundleIdentifier` in `app.json`.
-2. Set `APNS_ENVIRONMENT=sandbox` while testing development builds, then `production` for TestFlight and App Store builds. Device tokens only work against their matching environment.
+- **iOS:** the Supabase secrets `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY`, `APNS_BUNDLE_ID=app.flakey.ios`, and `APNS_ENVIRONMENT` (`sandbox` for development builds, `production` for TestFlight and the App Store).
+- **Android:** a Firebase app for `app.flakey.android`, its `google-services.json` referenced from `android.googleServicesFile` in `app.json`, and the Supabase secret `FCM_SERVICE_ACCOUNT_JSON`.
 
-**Android**
-
-1. Create a Firebase project and add an Android app with the package `app.flakey.android`.
-2. Download `google-services.json` into the repo root and add `"googleServicesFile": "./google-services.json"` under `android` in `app.json`. Without it, Android can't issue a push token.
-3. In Firebase, under Project settings > Service accounts, generate a private key. Save the whole JSON file's contents as the Supabase secret `FCM_SERVICE_ACCOUNT_JSON`.
-
-Notifications arrive on the `reminders` Android channel, which the app creates.
+Email and WhatsApp reminders from the server are unaffected either way.
 
 ## Project layout
 

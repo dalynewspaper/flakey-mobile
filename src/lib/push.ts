@@ -8,14 +8,18 @@ import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
 /**
- * Push reminders reuse the web app's backend as-is:
- *  - tokens go into public.device_tokens (one row per user + token)
- *  - the send-event-reminders job calls send-push-notification, which talks to
- *    APNs directly with the native device token.
- * So we register the *native* token (getDevicePushTokenAsync), not an Expo push
- * token. Android tokens (FCM) are stored too, but the backend only sends to
- * iOS today.
+ * Notification permission and (optional) server push registration.
+ *
+ * Reminders are scheduled on the device by localReminders.ts. Server push
+ * (send-event-reminders -> send-push-notification -> APNs/FCM) would send the
+ * same reminders a second time, so registering this phone's token is off by
+ * default. Set REMOTE_PUSH_ENABLED to true to switch to server push instead,
+ * and stop scheduling local reminders at the same time.
+ *
+ * When on, we register the *native* token (getDevicePushTokenAsync) into
+ * public.device_tokens, which is what the backend sends to.
  */
+export const REMOTE_PUSH_ENABLED = false;
 
 const STORED_TOKEN_KEY = 'flakey.pushToken';
 
@@ -31,14 +35,14 @@ Notifications.setNotificationHandler({
 export type PushStatus = 'granted' | 'denied' | 'undetermined' | 'unsupported';
 
 export async function getPushStatus(): Promise<PushStatus> {
-  if (!Device.isDevice || Platform.OS === 'web') return 'unsupported';
+  if (Platform.OS === 'web') return 'unsupported';
   const { status } = await Notifications.getPermissionsAsync();
   return status;
 }
 
-/** Asks for permission if needed, then saves this device's token for the user. */
+/** Asks for notification permission if needed; with server push on, also saves this device's token. */
 export async function registerForPush(userId: string, { prompt }: { prompt: boolean }): Promise<PushStatus> {
-  if (!Device.isDevice || Platform.OS === 'web') return 'unsupported';
+  if (Platform.OS === 'web') return 'unsupported';
 
   if (Platform.OS === 'android') {
     // The channel must exist before asking, or Android 13+ won't show the prompt.
@@ -52,7 +56,7 @@ export async function registerForPush(userId: string, { prompt }: { prompt: bool
   if (status !== 'granted' && prompt) {
     status = (await Notifications.requestPermissionsAsync()).status;
   }
-  if (status !== 'granted') return status;
+  if (status !== 'granted' || !REMOTE_PUSH_ENABLED || !Device.isDevice) return status;
 
   const { data: token, type } = await Notifications.getDevicePushTokenAsync();
   if (typeof token !== 'string' || !token) return status;

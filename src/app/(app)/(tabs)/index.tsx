@@ -6,6 +6,8 @@ import { Spacing } from '@/constants/theme';
 import { sortUpcoming, useEvents, useProfile } from '@/features/data';
 import { UpcomingRow } from '@/features/upcoming-row';
 import { useTheme } from '@/hooks/use-theme';
+import { toReminderEvents } from '@/features/reminders';
+import { syncLocalReminders } from '@/lib/localReminders';
 import { getPushStatus, registerForPush, type PushStatus } from '@/lib/push';
 import { useAuth } from '@/providers/auth';
 import { Button, Card, Divider, EmptyState, ErrorNotice, Loading, SectionLabel, Text } from '@/ui';
@@ -44,6 +46,7 @@ export default function TodayScreen() {
     try {
       const status = await registerForPush(user.id, { prompt: true });
       setPushStatus(status);
+      if (status === 'granted') await syncLocalReminders(toReminderEvents(events.data));
       if (status === 'denied') {
         Alert.alert('Notifications are off', 'Turn them on for Flakey in your phone settings to get reminders.', [
           { text: 'Not now', style: 'cancel' },

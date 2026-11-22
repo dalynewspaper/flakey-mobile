@@ -2,6 +2,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { clearLocalReminders } from '@/lib/localReminders';
 import { unregisterPushToken } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    await clearLocalReminders().catch(() => undefined);
     await unregisterPushToken().catch(() => undefined);
     await supabase.auth.signOut();
   };
