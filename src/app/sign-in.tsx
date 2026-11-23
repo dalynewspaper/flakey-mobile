@@ -90,20 +90,20 @@ export default function SignInScreen() {
               </Text>
             </View>
             <Field
-              label="Or enter the 6-digit code"
+              label="Or enter the code from the email"
               value={code}
               onChangeText={(v) => {
-                setCode(v.replace(/\D/g, '').slice(0, 6));
+                setCode(v.replace(/\D/g, '').slice(0, 8));
                 setError(null);
               }}
-              placeholder="123456"
+              placeholder="12345678"
               keyboardType="number-pad"
               textContentType="oneTimeCode"
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={8}
               error={error}
             />
-            <Button title="Sign in with code" onPress={verify} loading={busy} disabled={code.length !== 6} />
+            <Button title="Sign in with code" onPress={verify} loading={busy} disabled={code.length < 6} />
             <Button
               title="Use a different email"
               variant="ghost"
