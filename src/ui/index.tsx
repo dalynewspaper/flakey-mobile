@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -296,13 +296,22 @@ export function Divider() {
 export function Avatar({ person, size = 44 }: { person: PersonNameFields & { avatar_url?: string | null }; size?: number }) {
   const t = useTheme();
   const uri = resolveAvatarUri(person.avatar_url);
+  const [failedUri, setFailedUri] = useState<string | null>(null);
   const shape = { width: size, height: size, borderRadius: size / 2 };
-  if (uri) {
-    return <Image source={{ uri }} style={[shape, { backgroundColor: t.surface }]} contentFit="cover" transition={150} />;
-  }
+  // Initials sit underneath, so a slow or failed image still shows something.
   return (
-    <View style={[shape, { backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }]}>
+    <View style={[shape, { backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }]}>
       <Text style={{ fontFamily: Fonts.display, fontSize: size * 0.4, color: t.textStrong }}>{getPersonInitial(person)}</Text>
+      {uri && failedUri !== uri ? (
+        <Image
+          source={{ uri }}
+          style={[shape, { position: 'absolute', top: 0, left: 0 }]}
+          contentFit="cover"
+          transition={150}
+          onError={() => setFailedUri(uri)}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
     </View>
   );
 }

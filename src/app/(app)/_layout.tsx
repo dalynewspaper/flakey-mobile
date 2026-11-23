@@ -1,34 +1,25 @@
-import * as Notifications from 'expo-notifications';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useReminderTapRouting } from '@/features/reminder-taps';
 import { useLocalReminderSync } from '@/features/reminders';
-import { eventIdFromNotification, registerForPush } from '@/lib/push';
+import { registerForPush } from '@/lib/push';
 import { useAuth } from '@/providers/auth';
 
 export const unstable_settings = { anchor: '(tabs)' };
 
 export default function AppLayout() {
   const t = useTheme();
-  const router = useRouter();
   const { user } = useAuth();
-  const lastResponse = Notifications.useLastNotificationResponse();
   useLocalReminderSync();
+  useReminderTapRouting();
 
   // With server push on, refresh this device's token on launch (no-op otherwise).
   useEffect(() => {
     if (user) registerForPush(user.id, { prompt: false }).catch(() => undefined);
   }, [user]);
-
-  // Tapping a reminder opens that key date.
-  useEffect(() => {
-    if (!lastResponse) return;
-    const eventId = eventIdFromNotification(lastResponse);
-    if (eventId) router.push({ pathname: '/date/edit', params: { id: eventId } });
-    Notifications.clearLastNotificationResponse();
-  }, [lastResponse, router]);
 
   return (
     <Stack
